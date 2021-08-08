@@ -22,6 +22,16 @@ h1{
     padding: 2%;
 }
 
+.clock {
+    color: blue;
+    background-image: linear-gradient(rgb(100, 219, 100),rgb(238, 238, 69));
+    width: auto;
+    display: inline-block;
+    padding: 1rem;
+    border-radius: 0.74rem;
+    text-align: center;
+}
+
 .half-width img{
     width: 82%;
 }
