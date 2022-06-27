@@ -133,7 +133,7 @@ app.get("/scrap/", async(req,res)=>{
   }
   console.log(filteredTItleParaPosition.length, " to ",resultPT.length);
   console.log(await page.title(), "************");
-  
+  browser.close()
   res.json(resultPT);
 
 })
