@@ -35,7 +35,7 @@ app.get("/scrap/", async(req,res)=>{
     }
     
   // create browser with puppeteer and go the the utl page
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage();
   await page.goto(url,{waitUntil: 'load'});
   const alltitles = [];
