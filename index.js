@@ -139,7 +139,7 @@ app.get("/scrap/", async(req,res)=>{
 })
 
 app.get('/', (req, res) => {
-  res.send('Hello Scrap World!')
+  res.send('Hello Demo Web Scrap World!')
 })
 
 app.listen(port, () => {
