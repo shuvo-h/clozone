@@ -23,5 +23,5 @@ def static_proxy(path):
         return send_from_directory(app_1_frontend_bp.static_folder,path)
     except Exception as e:
         print(f"Error::==:: {e}")
-        return jsonify({"message":"Page Not found"}),404
-        # return render_template('404.html')
+        # return jsonify({"message":"Page Not found"}),404
+        return render_template('index.html')
