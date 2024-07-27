@@ -4,3 +4,13 @@ venv
 .env.local
 build
 dist
+
+# Ignore Python cache files at all levels
+**/__pycache__/
+__pycache__/
+
+# Python temp files
+__pycache__/
+*.py[cod]
+*$py.class
+
