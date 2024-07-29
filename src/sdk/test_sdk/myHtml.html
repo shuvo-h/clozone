@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My SDK Test</title>
+    <script src="https://raw.githubusercontent.com/your-username/your-repo/main/MySdk.js"></script>
+    <script>
+        const sdk = new MySdk({
+            apiKey: 'your-api-key',
+            apiBaseUrl: 'https://your-api-endpoint.com'
+        });
+
+        // Example usage
+        sdk.getUsers()
+            .then(users => console.log(users))
+            .catch(error => console.error('Error:', error));
+
+        sdk.createUser({ name: 'John Doe' })
+            .then(user => console.log(user))
+            .catch(error => console.error('Error:', error));
+    </script>
+</head>
+<body>
+</body>
+</html>
