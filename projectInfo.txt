@@ -1,0 +1,7 @@
+
+Review taker web application:
+- user get a javascript code to embed a form in their website.
+- then submit the form will hit our server to store the revieew.
+- the review will also be shown on the user's website. and can be managed from our dashboard.
+
+

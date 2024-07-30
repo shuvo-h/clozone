@@ -17,7 +17,7 @@ def index():
 
 # render vue build "dist" as template
 # configure the static file path when app=Flask(static_folder,template_folder)
-@app_1_frontend_bp.route('/<path:path>')
+@app_1_frontend_bp.route('/<path:path>',methods=['GET'])
 def static_proxy(path):
     try:
         return send_from_directory(app_1_frontend_bp.static_folder,path)
