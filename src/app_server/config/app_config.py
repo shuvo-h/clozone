@@ -1,6 +1,5 @@
 from flask import Flask, jsonify
-# from app_server.app_name_one.bluprint_registerer import register_all_frontend_bluprint
-from src.app_server.app_name_one.bluprint_registerer import register_all_frontend_bluprint
+from ..app_name_one.bluprint_registerer import register_all_frontend_bluprint, register_v1_bluprint
 
 # create a combined single ap and call all blueprints here to register
 def create_combined_app():
@@ -23,6 +22,8 @@ def create_combined_app():
 
     # register all blueprints here
     register_all_frontend_bluprint(app=app)
+    register_v1_bluprint(app=app)
+
     # app.register_blueprint(food_bp,url_prefix='/api/v1/foods')
     # register_all_users_bluprint(app)
     # register_all_food_bluprint(app)
