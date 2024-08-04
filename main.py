@@ -1,4 +1,8 @@
-import os
+# prevent to generate __pycache__ folder/file in development for each module
+import sys, os
+if os.getenv('FLASK_ENV') == 'development':
+     sys.dont_write_bytecode = True
+
 from dotenv import load_dotenv
 from src.app_server.config.app_config import create_combined_app
 
@@ -32,7 +36,9 @@ from src.app_server.config.app_config import create_combined_app
 # app run start
 
 # Load environment variables from .env file
-load_dotenv()
+cwd = os.getcwd()
+envFilePath = os.path.join(cwd,'.env')
+load_dotenv(dotenv_path=envFilePath)
 
 combined_app = create_combined_app()
 

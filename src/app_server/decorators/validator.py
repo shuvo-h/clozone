@@ -23,7 +23,7 @@ def validat_schema(marshlw_schema):
             except ValidationError as err:
                 return jsonify({'success':False,'message':err.messages}), 400
 
-             # Add validated data to the request context
+            # Add validated data to the request context
             request.validated_data = validated_data
 
             return func(*args, **kwargs)
