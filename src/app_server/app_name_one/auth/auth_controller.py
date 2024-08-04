@@ -1,3 +1,7 @@
 
 def create_user(payload):
-    errors = validate
+    # email exist or not
+    # create new user
+    # generate jwt token
+    # send cookies with response
+    return 1

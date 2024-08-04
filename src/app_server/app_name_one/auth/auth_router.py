@@ -9,9 +9,9 @@ auth_bp = Blueprint('auth_bp',__name__)
 @auth_bp.post("/register")
 @validator.validat_schema(auth_validation.CreateUser())
 def create_user():
-    print(request.validated_data)
-    # result = auth_controller.create_user()
-    result = request.validated_data
+    print(request.validated_data["body"])
+    result = auth_controller.create_user(request.validated_data["body"])
+    # result = request.validated_data
     return send_res(
         status=201,
         data= result,
