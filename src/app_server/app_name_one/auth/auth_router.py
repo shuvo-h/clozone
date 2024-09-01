@@ -17,3 +17,4 @@ def create_user():
         data= result,
         message='User created successfully',
     )
+
