@@ -6,6 +6,7 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.probability import FreqDist
 import json
+import re
 
 # download stopwords
 nltk.download('punkt')
@@ -43,7 +44,7 @@ def extract_key_phrases(content):
     # return the most common phrases
     return fdist.most_common(10)
 
-def createContexualInternalLink(new_blog_content):
+def createContexualInternalLink_XX(new_blog_content):
     api_url = "https://biddrup.com/wp-json/wp/v2/posts?_embed&per_page=20&page=3"
     # get posts and extract title and contents tupple
     posts = fetch_wp_posts(api_url)
@@ -66,9 +67,42 @@ def createContexualInternalLink(new_blog_content):
 
 
     return {
-        "ab":123,
         "res":updated_html_content,
-        # "articles":articles,
-        # "posts":posts,
 
+    }
+
+
+
+def createContexualInternalLink(new_blog_content):
+    api_url = "https://biddrup.com/wp-json/wp/v2/posts?_embed&per_page=20&page=3"
+    posts = fetch_wp_posts(api_url)
+    articles = [(post['title']['rendered'], post['content']['rendered'], post['link']) for post in posts]
+
+    # Parse the new blog content with BeautifulSoup
+    soup = BeautifulSoup(new_blog_content, 'html.parser')
+
+    # Build a dictionary of phrases and their corresponding links
+    link_map = {}
+    for title, content, link in articles:
+        key_phrases = extract_key_phrases(content)
+        for phrase, _ in key_phrases:
+            if phrase not in link_map:
+                link_map[phrase] = f'<a href="{link}">{phrase}</a>'
+
+    # Replace the key phrases in the HTML while keeping the structure intact
+    def replace_text_in_element(element):
+        if element.string:
+            text = element.string
+            combined_pattern = re.compile(r'\b(' + '|'.join(map(re.escape, link_map.keys())) + r')\b', re.IGNORECASE)
+            new_text = combined_pattern.sub(lambda match: link_map.get(match.group(0).lower(), match.group(0)), text)
+            element.replace_with(BeautifulSoup(new_text, 'html.parser'))
+
+    # Traverse all text elements in the HTML and apply the replacement
+    for element in soup.find_all(text=True):
+        replace_text_in_element(element)
+
+    # Return the updated HTML content with internal links inserted
+    updated_html_content = str(soup)
+    return {
+        "res": updated_html_content,
     }
