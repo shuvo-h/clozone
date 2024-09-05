@@ -1,7 +1,8 @@
 from flask import Blueprint, jsonify, request
 from src.app_server.utils.resSender import send_res
-from . import test_controller,topic_ln
-from . import LSI_keyword, LSI3Way
+# from . import test_controller,topic_ln
+# from . import LSI_keyword, LSI3Way
+from . import LSI_advance
 
 test_bp = Blueprint('test_bp',__name__)
 
