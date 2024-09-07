@@ -1,5 +1,9 @@
 from rake_nltk import Rake
 
+"""
+semantic similarity, keyword relevance, and keyword scoring based on how well they fit.
+"""
+
 def extract_clickable_keywords_by_rake(blog_text):
     # Initialize RAKE
     r = Rake()
