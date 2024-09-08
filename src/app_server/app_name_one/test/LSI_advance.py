@@ -144,71 +144,93 @@ for link in contextual_links:
 
 
 
-import nltk
-from nltk.tokenize import word_tokenize, sent_tokenize
-from collections import defaultdict
-
-# Sample input
-keywords = ['keyword1', 'keyword2', 'keyword3']
-blog = {
-    'id': 1,
-    'link': 'https://example.com/sample-blog',
-    'title': 'Sample Blog Title',
-    'content': """
-    This is a sample blog content containing keyword1 and keyword2.
-    It talks about various topics including keyword3 and how they relate to each other.
-    Keyword1 is important because it shows the connection to keyword2 and keyword3.
-    """
-}
-
-# Function to calculate contextual score
-def calculate_contextual_score(blog, keywords):
-    # Tokenize the blog content into sentences and words
-    sentences = sent_tokenize(blog['content'].lower())
-
-    # Initialize a dictionary to hold scores
-    scores = defaultdict(lambda: {'id': blog['id'], 'link': blog['link'], 'score': 0})
-
-    # Analyze each keyword
-    for keyword in keywords:
-        keyword_lower = keyword.lower()
-        keyword_count = 0
-        context_scores = []
-
-        # Check each sentence for the keyword
-        for sentence in sentences:
-            # Check if the keyword is present in the sentence
-            if keyword_lower in sentence:
-                keyword_count += 1
-                words = word_tokenize(sentence)
-
-                # Calculate the proximity of other keywords
-                proximity_scores = []
-                for other_keyword in keywords:
-                    if other_keyword.lower() != keyword_lower and other_keyword.lower() in words:
-                        # Calculate the distance between the keywords
-                        distance = abs(words.index(other_keyword.lower()) - words.index(keyword_lower))
-                        proximity_scores.append(1 / (distance + 1))  # Inverse distance score
-
-                # If there are other keywords, average their proximity scores
-                if proximity_scores:
-                    context_scores.append(sum(proximity_scores) / len(proximity_scores))
-
-        # Calculate the final score
-        if context_scores:
-            average_proximity_score = sum(context_scores) / len(context_scores)
-            total_score = (keyword_count * average_proximity_score)  # Weighted score
-            scores[keyword]['score'] = total_score
-
-    return scores
 
 
-# Analyze the blog
-contextual_scores = calculate_contextual_score(blogs[0], keyResult[0:10])
-print(12212121,contextual_scores.items())
-# Print results
-for keyword, data in contextual_scores.items():
-    print(f"Keyword: {keyword}, ID: {data['id']}, Link: {data['link']}, Score: {data['score']:.4f}")
+
+
+import spacy
+
+# Load spaCy's language model
+nlp = spacy.load('en_core_web_md')
+
+def find_best_keyword_for_each_blog(keywords, blogs, threshold=0.5):
+    # Initialize a set to store already assigned keywords
+    used_keywords = set()
+
+    # Initialize a list to store updated blog information
+    updated_blogs = []
+
+    # Track keywords that have been discarded for not meeting contextual requirements
+    discarded_keywords = set()
+
+    for blog in blogs:
+        blog_content = blog['content']
+        blog_doc = nlp(blog_content)
+
+        # Initialize a list to store the scores for available keywords
+        keyword_scores = []
+
+        # Loop through each keyword that hasn't been used or discarded
+        for keyword in keywords:
+            if keyword not in used_keywords and keyword not in discarded_keywords:
+                keyword_doc = nlp(keyword)  # Process the keyword
+
+                # Calculate the similarity between the keyword and blog content
+                similarity_score = keyword_doc.similarity(blog_doc)
+
+                # Only add scores that meet the contextual threshold
+                if similarity_score >= threshold:
+                    keyword_scores.append({'keyword': keyword, 'score': similarity_score})
+                else:
+                    discarded_keywords.add(keyword)  # Discard if not contextually relevant
+
+        # Sort the keyword scores and pick the top one if available
+        if keyword_scores:
+            best_match = max(keyword_scores, key=lambda x: x['score'])
+
+            # Mark the chosen keyword as used
+            used_keywords.add(best_match['keyword'])
+
+            # Prepare the updated blog with the top keyword and its contextual score
+            updated_blog = {
+                'id': blog['id'],
+                'link': blog['link'],
+                'title': blog['title'],
+                'contextual_score': best_match['score'],
+                'contextual_keyword_to_link': best_match['keyword']
+            }
+
+            # Add the updated blog to the result list
+            updated_blogs.append(updated_blog)
+        else:
+            # If no keyword meets the threshold, just add the blog without a keyword
+            updated_blog = {
+                'id': blog['id'],
+                'link': blog['link'],
+                'title': blog['title'],
+                'contextual_score': None,
+                'contextual_keyword_to_link': None
+            }
+            # updated_blogs.append(updated_blog) # no need which has no score
+
+    return updated_blogs, list(discarded_keywords)
+
+
+
+# Find the best keyword for each blog, with a threshold
+updated_blogs, discarded_keywords = find_best_keyword_for_each_blog(keyResult, blogs, threshold=0.5)
+
+# Output the result
+print("Updated Blogs:")
+for blog in updated_blogs:
+    print(blog)
+
+print("\nDiscarded Keywords:")
+print(discarded_keywords)
+
+
+
+
 
 
 
