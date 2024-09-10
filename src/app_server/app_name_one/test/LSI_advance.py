@@ -14,79 +14,6 @@ all_keywords_rake = extract_clickable_keywords_by_rake(new_blog)
 
 
 
-
-abcblog = """
-
-Introduction
-
-Social media marketing has become an essential part of any successful business strategy. With billions of people using platforms like Facebook, Instagram, Twitter, and LinkedIn, businesses have a unique opportunity to reach their target audience and engage with them directly. Using social media effectively can help your business build brand awareness, generate leads, and increase sales.
-
-However, diving into social media marketing without a plan can be overwhelming. It's important to understand how social media can benefit your business and choose the right platforms that align with your goals. Crafting engaging content that resonates with your audience is key to driving results.
-
-Understanding the Benefits of Social Media Marketing
-
-Social media marketing offers numerous benefits for businesses willing to engage with their audience online. One of the most significant advantages is the ability to build brand awareness. By consistently posting and interacting on social platforms, you can keep your business top of mind for potential customers. This increased visibility can lead to greater recognition and trust in your brand.
-
-Another key benefit is the capacity to generate leads and drive sales. Social media allows you to reach people who are already interested in your products or services. Tools like targeted ads and promotions can attract new customers and encourage repeat business. Additionally, many platforms now offer features like in-app shopping, making it easy for users to purchase directly from your posts.
-
-Social media also provides valuable insights into your audience’s preferences and behaviors. By analyzing engagement metrics, such as likes, shares, and comments, you can tailor your marketing strategies to better meet the needs of your followers. This ongoing feedback loop helps you stay relevant and responsive to your audience.
-
-Choosing the Right Platforms for Your Business
-
-Selecting the right social media platforms is crucial for effective marketing. Each platform has its unique strengths and user demographics, so it's essential to choose the ones that align with your business goals. Here’s a quick guide to some of the most popular platforms:
-
-1. Facebook: With its broad user base and advanced targeting options, Facebook is ideal for building community and running detailed ad campaigns.
-
-2. Instagram: Perfect for visual storytelling, Instagram works well for businesses with strong visual content like photos and videos. It's particularly popular among younger users.
-
-3. Twitter: Known for real-time updates and concise messages, Twitter is great for customer service, industry news, and engaging in trending topics.
-
-4. LinkedIn: Best for B2B marketing, LinkedIn connects you with professionals and decision-makers. It's useful for sharing industry insights and networking.
-
-5. Pinterest: Ideal for businesses in the fashion, food, and home decor industries, Pinterest allows you to share visually appealing content that drives traffic to your site.
-
-Before committing to a platform, research where your target audience spends their time. It’s better to focus on a few platforms and do them well rather than spreading yourself too thin across many. This targeted approach ensures that you are reaching the right people with the right message.
-
-Creating Engaging Content That Drives Results
-
-Creating engaging content is key to capturing the attention of your target audience and driving results. The first step is understanding what type of content resonates with your followers. This involves knowing their preferences and behaviors. For example, do they prefer videos, images, infographics, or written posts?
-
-Quality matters more than quantity. Focus on producing high-quality content that provides value to your audience. This can include educational posts, entertaining videos, or inspiring stories. Always aim to solve a problem or fulfill a need for your followers.
-
-Interactive content can also boost engagement. Polls, quizzes, and live Q&A sessions encourage audience participation and keep them coming back for more. Consistent branding across all posts, such as using your logo, brand colors, and unique voice, helps establish a recognizable presence.
-
-Measuring Success and Adjusting Your Strategy
-
-To ensure your social media marketing efforts are effective, it's important to measure your success and adjust your strategy as needed. Start by setting clear, measurable goals. These can include metrics like reach, engagement, website traffic, and conversions.
-
-Use analytics tools provided by social media platforms to track performance. Look at key metrics such as likes, shares, comments, and click-through rates. These insights will show which types of content perform best and how your audience is responding to your posts.
-
-Based on your findings, adjust your strategy to improve results. If a certain type of content isn’t performing well, try something different. Stay flexible and be willing to experiment. Continuously refining your approach will help you better connect with your audience and achieve your marketing goals.
-
-Conclusion
-
-Social media marketing is a powerful tool for any business looking to grow its online presence and engage with customers. By understanding the benefits, choosing the right platforms, creating engaging content, and measuring success, you set the groundwork for a successful social media strategy. These steps will help your business stand out and connect with your target audience in meaningful ways.
-
-At Just Because Media, we specialize in helping businesses achieve their marketing goals through effective social media strategies. Contact us today to learn how we can assist you in maximizing your social media marketing and driving real results for your business. Let’s work together to take your marketing to the next level.
-
-"""
-
-
-
-
-restult = extract_clickable_keywords_by_rake(abcblog)
-
-print("My ABC result = ")
-keyResult = [word for(score,word) in restult]
-# print(keyResult)
-# for (word,score) in restult[:50]:
-#     print(f"{score} = {word}")
-
-blogs = get_all_blogs("https://justbecause.media")
-print("total blogs = ",len(blogs))
-
-
-
 # ------------------- find links -----------
 """
 import spacy
@@ -148,85 +75,95 @@ for link in contextual_links:
 
 
 
+
+
+
+import nltk
+from nltk.tokenize import word_tokenize, sent_tokenize
+from bs4 import BeautifulSoup
 import spacy
 
-# Load spaCy's language model
-nlp = spacy.load('en_core_web_md')
+# Download necessary NLTK data
+nltk.download('punkt')
 
-def find_best_keyword_for_each_blog(keywords, blogs, threshold=0.5):
-    # Initialize a set to store already assigned keywords
-    used_keywords = set()
+# Load spaCy model for word embeddings
+nlp = spacy.load("en_core_web_md")  # You can also use 'en_core_web_lg' for more accuracy
 
-    # Initialize a list to store updated blog information
-    updated_blogs = []
+def clean_html(content):
+    soup = BeautifulSoup(content, "html.parser")
+    return soup.get_text()
 
-    # Track keywords that have been discarded for not meeting contextual requirements
-    discarded_keywords = set()
+def is_keyword_suitable_for_linking(content, keyword):
+    clean_content = clean_html(content)
+
+    # Tokenize the cleaned text
+    tokenized_sentences = sent_tokenize(clean_content)
+
+    # Process the content and keyword using spaCy's word vectors
+    doc_content = nlp(clean_content.lower())
+    doc_keyword = nlp(keyword.lower())
+
+    keyword_found = False
+    keyword_in_context = False
+    highest_similarity = 0
+
+    # Scan for sentences with the keyword and evaluate the context
+    for sentence in tokenized_sentences:
+        if keyword.lower() in sentence.lower():
+            keyword_found = True
+
+            # Check the similarity of the sentence context to the keyword
+            sentence_doc = nlp(sentence.lower())
+            similarity_score = doc_keyword.similarity(sentence_doc)
+            print(similarity_score," = ",keyword)
+            if similarity_score > 0.7:  # You can adjust this threshold for context matching
+                keyword_in_context = True
+                highest_similarity = max(highest_similarity, similarity_score)
+                break  # We found a suitable context
+
+    if keyword_found and keyword_in_context:
+        return {
+            'similarity_score': highest_similarity,
+            'keyword_in_context': keyword_in_context
+        }
+
+    return None
+
+def find_matching_blogs_for_keywords(blogs, keywords):
+    """
+    Iterate through each blog and keyword, returning blogs that contextually match any of the keywords.
+    """
+    matched_blogs = []
 
     for blog in blogs:
-        blog_content = blog['content']
-        blog_doc = nlp(blog_content)
-
-        # Initialize a list to store the scores for available keywords
-        keyword_scores = []
-
-        # Loop through each keyword that hasn't been used or discarded
         for keyword in keywords:
-            if keyword not in used_keywords and keyword not in discarded_keywords:
-                keyword_doc = nlp(keyword)  # Process the keyword
+            suitability = is_keyword_suitable_for_linking(blog['content'], keyword)
 
-                # Calculate the similarity between the keyword and blog content
-                similarity_score = keyword_doc.similarity(blog_doc)
+            if suitability:
+                matched_blogs.append({
+                    'blog': {
+                        'id': blog['id'],
+                        'link': blog['link'],
+                        'title': blog['title'],
+                        'content': blog['content']
+                    },
+                    'keyword': keyword,
+                    'reason': suitability
+                })
 
-                # Only add scores that meet the contextual threshold
-                if similarity_score >= threshold:
-                    keyword_scores.append({'keyword': keyword, 'score': similarity_score})
-                else:
-                    discarded_keywords.add(keyword)  # Discard if not contextually relevant
+    return matched_blogs if matched_blogs else None
 
-        # Sort the keyword scores and pick the top one if available
-        if keyword_scores:
-            best_match = max(keyword_scores, key=lambda x: x['score'])
+# Example usage:
+blogs = get_all_blogs('http://justbecause.media')  # Assume this fetches blog data
+matched_blogs = find_matching_blogs_for_keywords(blogs, all_keywords)
 
-            # Mark the chosen keyword as used
-            used_keywords.add(best_match['keyword'])
+if matched_blogs:
+    for match in matched_blogs:
+        print(f"'{match['keyword']}': {match['blog']['title']} ({match['blog']['link']})")
+        print(f"Reason: {match['reason']}")
+else:
+    print("No suitable blog found.")
 
-            # Prepare the updated blog with the top keyword and its contextual score
-            updated_blog = {
-                'id': blog['id'],
-                'link': blog['link'],
-                'title': blog['title'],
-                'contextual_score': best_match['score'],
-                'contextual_keyword_to_link': best_match['keyword']
-            }
-
-            # Add the updated blog to the result list
-            updated_blogs.append(updated_blog)
-        else:
-            # If no keyword meets the threshold, just add the blog without a keyword
-            updated_blog = {
-                'id': blog['id'],
-                'link': blog['link'],
-                'title': blog['title'],
-                'contextual_score': None,
-                'contextual_keyword_to_link': None
-            }
-            # updated_blogs.append(updated_blog) # no need which has no score
-
-    return updated_blogs, list(discarded_keywords)
-
-
-
-# Find the best keyword for each blog, with a threshold
-updated_blogs, discarded_keywords = find_best_keyword_for_each_blog(keyResult, blogs, threshold=0.5)
-
-# Output the result
-print("Updated Blogs:")
-for blog in updated_blogs:
-    print(blog)
-
-print("\nDiscarded Keywords:")
-print(discarded_keywords)
 
 
 
