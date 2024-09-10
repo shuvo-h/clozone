@@ -2,7 +2,10 @@ from flask import Blueprint, jsonify, request
 from src.app_server.utils.resSender import send_res
 # from . import test_controller,topic_ln
 # from . import LSI_keyword, LSI3Way
-from . import LSI_advance
+# from . import LSI_advance
+# from .sh_pack import linkFinder_BERT
+from .sh_pack import linkFinder_distilBERT
+
 
 test_bp = Blueprint('test_bp',__name__)
 

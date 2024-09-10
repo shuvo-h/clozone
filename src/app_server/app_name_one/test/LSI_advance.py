@@ -76,12 +76,12 @@ for link in contextual_links:
 
 
 
-
-
 import nltk
 from nltk.tokenize import word_tokenize, sent_tokenize
 from bs4 import BeautifulSoup
 import spacy
+from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 
 # Download necessary NLTK data
 nltk.download('punkt')
@@ -93,78 +93,96 @@ def clean_html(content):
     soup = BeautifulSoup(content, "html.parser")
     return soup.get_text()
 
-def is_keyword_suitable_for_linking(content, keyword):
-    clean_content = clean_html(content)
+def preprocess_blogs(blogs):
+    """
+    Preprocess and cache the cleaned content and embeddings for each blog.
+    """
+    preprocessed_blogs = []
+    for blog in blogs:
+        clean_content = clean_html(blog['content'])
+        doc_content = nlp(clean_content.lower())
+        preprocessed_blogs.append({
+            'id': blog['id'],
+            'link': blog['link'],
+            'title': blog['title'],
+            'clean_content': clean_content,
+            'doc_content': doc_content
+        })
+    return preprocessed_blogs
 
-    # Tokenize the cleaned text
-    tokenized_sentences = sent_tokenize(clean_content)
-
-    # Process the content and keyword using spaCy's word vectors
-    doc_content = nlp(clean_content.lower())
+def is_keyword_suitable_for_linking(clean_content, doc_content, keyword):
+    """
+    Check if the keyword is suitable for linking based on similarity score.
+    """
+    # Process the keyword using spaCy's word vectors
     doc_keyword = nlp(keyword.lower())
 
-    keyword_found = False
-    keyword_in_context = False
-    highest_similarity = 0
+    # Check if the keyword exists in the cleaned content
+    if keyword.lower() not in clean_content.lower():
+        return None  # Keyword not found in the content
 
-    # Scan for sentences with the keyword and evaluate the context
-    for sentence in tokenized_sentences:
-        if keyword.lower() in sentence.lower():
-            keyword_found = True
+    # Calculate the similarity of the entire content to the keyword
+    similarity_score = doc_keyword.similarity(doc_content)
 
-            # Check the similarity of the sentence context to the keyword
-            sentence_doc = nlp(sentence.lower())
-            similarity_score = doc_keyword.similarity(sentence_doc)
-            print(similarity_score," = ",keyword)
-            if similarity_score > 0.7:  # You can adjust this threshold for context matching
-                keyword_in_context = True
-                highest_similarity = max(highest_similarity, similarity_score)
-                break  # We found a suitable context
+    # Return the similarity score regardless of the threshold
+    return {
+        'similarity_score': similarity_score,
+        'content_length': len(clean_content.split()),  # Word count for additional context
+        'keyword_found': True
+    }
 
-    if keyword_found and keyword_in_context:
-        return {
-            'similarity_score': highest_similarity,
-            'keyword_in_context': keyword_in_context
-        }
-
-    return None
-
-def find_matching_blogs_for_keywords(blogs, keywords):
+def analyze_keyword_across_blogs(keyword, blogs):
     """
-    Iterate through each blog and keyword, returning blogs that contextually match any of the keywords.
+    Analyze each blog for a single keyword and return the blog with the highest similarity score.
     """
-    matched_blogs = []
+    best_match = None
+    best_score = -1
 
     for blog in blogs:
-        for keyword in keywords:
-            suitability = is_keyword_suitable_for_linking(blog['content'], keyword)
+        suitability = is_keyword_suitable_for_linking(blog['clean_content'], blog['doc_content'], keyword)
 
-            if suitability:
-                matched_blogs.append({
-                    'blog': {
-                        'id': blog['id'],
-                        'link': blog['link'],
-                        'title': blog['title'],
-                        'content': blog['content']
-                    },
-                    'keyword': keyword,
-                    'reason': suitability
-                })
+        if suitability and suitability['similarity_score'] > best_score:
+            best_match = {
+                'blog': {
+                    'id': blog['id'],
+                    'link': blog['link'],
+                    'title': blog['title']
+                },
+                'keyword': keyword,
+                'reason': suitability
+            }
+            best_score = suitability['similarity_score']
 
-    return matched_blogs if matched_blogs else None
+    return best_match
 
-# Example usage:
+def find_best_blogs_for_keywords(blogs, keywords):
+    """
+    Find the best matching blog for each keyword by comparing all blogs for that keyword.
+    """
+    preprocessed_blogs = preprocess_blogs(blogs)  # Preprocess once
+    best_matches = []
+
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(analyze_keyword_across_blogs, keyword, preprocessed_blogs) for keyword in keywords]
+        for future in futures:
+            best_match = future.result()
+            if best_match:
+                best_matches.append(best_match)
+
+    return best_matches if best_matches else None
+
+print(len(all_keywords))
+# Fetch blogs and find matches
 blogs = get_all_blogs('http://justbecause.media')  # Assume this fetches blog data
-matched_blogs = find_matching_blogs_for_keywords(blogs, all_keywords)
+best_blogs = find_best_blogs_for_keywords(blogs, all_keywords)
 
-if matched_blogs:
-    for match in matched_blogs:
+# Display the best-matching blogs for each keyword
+if best_blogs:
+    for match in best_blogs:
         print(f"'{match['keyword']}': {match['blog']['title']} ({match['blog']['link']})")
-        print(f"Reason: {match['reason']}")
+        print(f"Similarity Score: {match['reason']['similarity_score']}, Content Length: {match['reason']['content_length']} words\n")
 else:
     print("No suitable blog found.")
-
-
 
 
 
