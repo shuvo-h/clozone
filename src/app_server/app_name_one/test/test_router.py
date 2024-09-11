@@ -79,10 +79,7 @@ def createContextualLink():
 @test_bp.post('/collect_contextual_link')
 def collectContextualLink():
     body = request.get_json()
-    keywords=[]
-    blogs=[]
-    contextual_links=[]
-    result = context_linker.collect_context_links(body['new_blog'])
+    result = context_linker.collect_context_links(body['new_blog'],domain=body['domain'])
 
     return send_res(
         status=201,

@@ -37,9 +37,9 @@ def find_contextual_links(blogs, keywords):
     return contextual_links
 
 
-def collect_context_links(new_blog):
+def collect_context_links(new_blog,domain):
     keywords= key_extractor.extract_linkable_phrases(new_blog)
-    blogs= get_all_blogs('http://justbecause.media')
+    blogs= get_all_blogs(domain)
     contextual_links= find_contextual_links(blogs=blogs,keywords=keywords)
 
 
