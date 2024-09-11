@@ -40,6 +40,7 @@ def extract_linkable_phrases(text):
             phrase = ' '.join(word for word, pos in subtree.leaves())
             # Only keep phrases with 3 or more words and avoid possessives
             if len(phrase.split()) >= 3 and "’" not in phrase and phrase.lower() not in stop_words:
+                print(phrase)
                 phrases.append(phrase)
 
     # Deduplicate and return phrases

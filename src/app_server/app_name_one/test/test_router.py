@@ -4,7 +4,9 @@ from src.app_server.utils.resSender import send_res
 # from . import LSI_keyword, LSI3Way
 # from . import LSI_advance
 # from .sh_pack import linkFinder_BERT
-from .sh_pack import linkFinder_distilBERT
+# from .sh_pack import linkFinder_distilBERT
+from .sh_pack import context_linker
+
 
 
 test_bp = Blueprint('test_bp',__name__)
@@ -74,7 +76,19 @@ def createContextualLink():
     )
 
 
+@test_bp.post('/collect_contextual_link')
+def collectContextualLink():
+    body = request.get_json()
+    keywords=[]
+    blogs=[]
+    contextual_links=[]
+    result = context_linker.collect_context_links(body['new_blog'])
 
+    return send_res(
+        status=201,
+        data=result,
+        message='Collected contextual links'
+    )
 
 
 
